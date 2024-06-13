@@ -114,4 +114,4 @@ List<Comment> listarComentariosPorAutor(String author);
   - **Utilidade**: Permite obter uma visão completa de um post junto com todos os seus comentários, o que é útil em uma aplicação de blog.
   - **Reutilização**: Pode ser usada em várias partes da aplicação, como na visualização detalhada de um post.
 
-Esta explicação deve ajudar a entender o propósito e a sintaxe das queries e métodos de consulta, mesmo para alguém que não tem muita experiência em programação.
+
