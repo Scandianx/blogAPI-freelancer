@@ -1,117 +1,51 @@
-### Explicação dos Métodos e Sua Sintaxe para MongoDB
+### Classe `Comment`
+- **Objetivo**: Representa um comentário em um post do blog.
+- **Anotações**:
+  - `@Document(collection = "comments")`: Indica que a classe será armazenada na coleção "comments" no MongoDB.
+  - `@Id`: Define o campo `id` como identificador único.
+- **Campos**:
+  - `id`: Identificador único do comentário.
+  - `postId`: Identificador do post ao qual o comentário pertence.
+  - `commenter`: Nome do autor do comentário.
+  - `content`: Conteúdo do comentário.
+  - `commentedDate`: Data e hora em que o comentário foi feito.
 
-#### Contexto
+### Classe `Post`
+- **Objetivo**: Representa um post no blog.
+- **Anotações**:
+  - `@Document(collection = "posts")`: Indica que a classe será armazenada na coleção "posts" no MongoDB.
+  - `@Id`: Define o campo `id` como identificador único.
+- **Campos**:
+  - `id`: Identificador único do post.
+  - `title`: Título do post.
+  - `content`: Conteúdo do post.
+  - `author`: Autor do post.
+  - `hashtags`: Hashtags associadas ao post.
+  - `createdDate`: Data e hora em que o post foi criado.
+  - `inactive`: Indica se o post está ativo ou inativo.
 
-Estamos trabalhando com uma aplicação de blog que utiliza um banco de dados MongoDB para armazenar posts e comentários. Queremos criar consultas (queries) que nos permitam buscar dados específicos do banco de dados de forma eficiente. Usamos o Spring Data MongoDB para definir essas consultas em Java.
+### Classe `CommentController`
+- **Objetivo**: Controla as operações relacionadas aos comentários.
+- **Anotações**:
+  - `@RestController`: Indica que a classe é um controlador REST.
+  - `@RequestMapping("/comments")`: Define a rota base para comentários.
+- **Métodos**:
+  - `getCommentsByPostId`: Retorna todos os comentários de um post específico.
+  - `createComment`: Cria um novo comentário.
+  - `deleteComment`: Deleta um comentário por seu identificador.
 
-### Consultas (Queries)
+### Classe `PostController`
+- **Objetivo**: Controla as operações relacionadas aos posts.
+- **Anotações**:
+  - `@RestController`: Indica que a classe é um controlador REST.
+  - `@RequestMapping("/posts")`: Define a rota base para posts.
+- **Métodos**:
+  - `getAllPosts`: Retorna todos os posts.
+  - `getPostById`: Retorna um post específico pelo seu identificador.
+  - `createPost`: Cria um novo post.
+  - `updatePost`: Atualiza um post existente.
+  - `updatePostPartially`: Atualiza parcialmente um post existente.
+  - `deletePost`: Deleta um post por seu identificador, marcando-o como inativo.
 
-#### Query 1: Listar posts por autor
-
-```java
-@Query("{ 'author': ?0 }")
-List<Post> listarPorAutor(String author);
-```
-
-- **Objetivo**: Encontrar todos os posts escritos por um autor específico.
-- **Explicação**:
-  - `@Query` é uma anotação usada para definir uma consulta personalizada em MongoDB.
-  - `"{ 'author': ?0 }"` é a consulta em si, onde `author` é o campo no documento do MongoDB e `?0` é um parâmetro que será substituído pelo valor fornecido.
-  - Este método retorna uma lista de posts (`List<Post>`) que foram escritos pelo autor especificado.
-
-#### Query 2: Listar comentários por postId
-
-```java
-@Query("{ 'postId': ?0 }")
-List<Comment> listarPorPostId(String postId);
-```
-
-- **Objetivo**: Encontrar todos os comentários associados a um post específico.
-- **Explicação**:
-  - `@Query` define uma consulta personalizada em MongoDB.
-  - `"{ 'postId': ?0 }"` é a consulta que filtra os comentários pelo campo `postId`.
-  - Este método retorna uma lista de comentários (`List<Comment>`) que pertencem ao post especificado pelo `postId`.
-
-#### Query 3: Contar comentários por post (usando agregação)
-
-```java
-@Aggregation(pipeline = {
-    "{ '$group': { '_id': '$postId', 'count': { '$sum': 1 } } }"
-})
-List<Map<String, Object>> contarComentariosPorPost();
-```
-
-- **Objetivo**: Contar quantos comentários existem para cada post.
-- **Explicação**:
-  - `@Aggregation` é uma anotação usada para definir uma consulta de agregação em MongoDB.
-  - `"$group": { "_id": "$postId", "count": { "$sum": 1 } }` agrupa os documentos de comentário pelo campo `postId` e conta quantos comentários existem para cada grupo.
-  - Este método retorna uma lista de mapas (`List<Map<String, Object>>`) onde cada mapa contém o `postId` e o número de comentários (`count`) para aquele post.
-
-#### Query 4: Listar posts com uma determinada hashtag
-
-```java
-@Query("{ 'hashtags': { '$regex': ?0, '$options': 'i' } }")
-List<Post> listarPorHashtag(String hashtag);
-```
-
-- **Objetivo**: Encontrar todos os posts que contêm uma hashtag específica.
-- **Explicação**:
-  - `@Query` define uma consulta personalizada em MongoDB.
-  - `"{ 'hashtags': { '$regex': ?0, '$options': 'i' } }"` utiliza uma expressão regular (`$regex`) para buscar posts cujas hashtags contenham o valor especificado. A opção `'i'` torna a busca case-insensitive.
-  - Este método retorna uma lista de posts (`List<Post>`) que contêm a hashtag especificada.
-
-#### Query 5: Listar posts e seus comentários (usando agregação)
-
-```java
-@Aggregation(pipeline = {
-    "{ '$match': { '_id': ObjectId(?0) } }",
-    "{ '$lookup': { 'from': 'comments', 'localField': '_id', 'foreignField': 'postId', 'as': 'comments' } }"
-})
-List<Map<String, Object>> listarPostComComentarios(String postId);
-```
-
-- **Objetivo**: Encontrar um post específico junto com todos os seus comentários.
-- **Explicação**:
-  - `@Aggregation` define uma consulta de agregação em MongoDB.
-  - `"$match": { "_id": ObjectId(?0) }` filtra os posts pelo ID fornecido.
-  - `"$lookup": { "from": "comments", "localField": "_id", "foreignField": "postId", "as": "comments" }` realiza uma operação de junção (join) entre a coleção de posts e a coleção de comentários, combinando os documentos com base no campo `postId`.
-  - Este método retorna uma lista de mapas (`List<Map<String, Object>>`) onde cada mapa contém um post e seus comentários associados.
-
-#### Query 6: Listar comentários de um autor específico
-
-```java
-@Aggregation(pipeline = {
-    "{ '$lookup': { 'from': 'posts', 'localField': 'postId', 'foreignField': '_id', 'as': 'post' } }",
-    "{ '$unwind': '$post' }",
-    "{ '$match': { 'post.author': ?0 } }"
-})
-List<Comment> listarComentariosPorAutor(String author);
-```
-
-- **Objetivo**: Encontrar todos os comentários de posts escritos por um autor específico.
-- **Explicação**:
-  - `@Aggregation` define uma consulta de agregação em MongoDB.
-  - `"$lookup": { "from": "posts", "localField": "postId", "foreignField": "_id", "as": "post" }` realiza uma operação de junção entre a coleção de comentários e a coleção de posts.
-  - `"$unwind": "$post"` decompõe o array de posts para fazer correspondência com os comentários.
-  - `"$match": { "post.author": ?0 }` filtra os resultados para retornar apenas os comentários dos posts cujo autor corresponde ao valor fornecido.
-  - Este método retorna uma lista de comentários (`List<Comment>`) escritos para posts do autor especificado.
-
-### Seleção da Melhor Query
-
-**Selecionada: Listar posts e seus comentários (usando agregação)**
-
-- **Objetivo**: Esta consulta busca um post específico junto com todos os seus comentários.
-- **Sintaxe**:
-  ```java
-  @Aggregation(pipeline = {
-      "{ '$match': { '_id': ObjectId(?0) } }",
-      "{ '$lookup': { 'from': 'comments', 'localField': '_id', 'foreignField': 'postId', 'as': 'comments' } }"
-  })
-  List<Map<String, Object>> listarPostComComentarios(String postId);
-  ```
-- **Justificativa**:
-  - **Complexidade**: Mostra o uso de agregação para combinar dados de duas coleções diferentes.
-  - **Utilidade**: Permite obter uma visão completa de um post junto com todos os seus comentários, o que é útil em uma aplicação de blog.
-  - **Reutilização**: Pode ser usada em várias partes da aplicação, como na visualização detalhada de um post.
-
-
+### Resumo
+O projeto BlogAPI é uma aplicação backend que utiliza Spring Boot para gerenciar um blog com posts e comentários. A estrutura do projeto é dividida em modelos de dados (`model`), controladores de rotas (`controller`) e serviços de lógica de negócio (`service`). Cada classe e método tem um propósito claro e bem definido, facilitando a manutenção e expansão da aplicação.
